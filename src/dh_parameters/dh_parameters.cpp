@@ -15,7 +15,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh ) :
 							jt_(JointType::Static),
 							q_(0.0),
 							parameters_changed_(true),
-							transform_valid_(true),
+							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
 }
 
@@ -28,7 +28,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 							jt_(JointType::Static),
 							q_(0.0),
 							parameters_changed_(true),
-							transform_valid_(true),
+							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
 	load(parameter_name);
 }
@@ -42,7 +42,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t,
 							jt_(JointType::Static),
 							q_(0.0),
 							parameters_changed_(true),
-							transform_valid_(true),
+							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
 	set(d,t,r,a,jt,q);
 }
@@ -53,6 +53,8 @@ DHParameters::~DHParameters( void ) {
 
 bool DHParameters::load( std::string parameter_name ) {
 	double success = false;
+
+	ROS_INFO("Loading joint parameters: %s", parameter_name.c_str());
 
 	double d = 0.0;
 	double t = 0.0;

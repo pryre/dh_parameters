@@ -54,8 +54,6 @@ DHParameters::~DHParameters( void ) {
 bool DHParameters::load( std::string parameter_name ) {
 	double success = false;
 
-	ROS_INFO("Loading joint parameters: %s", parameter_name.c_str());
-
 	double d = 0.0;
 	double t = 0.0;
 	double r = 0.0;

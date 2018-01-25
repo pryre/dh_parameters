@@ -152,6 +152,11 @@ double DHParameters::a( void ) {
 	return a_;
 }
 
+
+std::string DHParameters::name( void ) {
+	return name_;
+}
+
 DHParameters::JointType DHParameters::jt( void ) {
 	return jt_;
 }

@@ -39,7 +39,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 	load(parameter_name);
 }
 
-DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt, const double q ) :
+DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt, const double q, const double beta) :
 							nh_(nh),
 							d_(0.0),
 							t_(0.0),
@@ -53,7 +53,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t,
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
-	set(d,t,r,a,jt,q);
+	set(d,t,r,a,jt,q,beta);
 }
 
 DHParameters::~DHParameters( void ) {
@@ -69,6 +69,7 @@ bool DHParameters::load( std::string parameter_name ) {
 	double a = 0.0;
 	JointType jt = JointType::Static;
 	double q = 0.0;
+	double beta = 0.0;
 
 	if( nh_->getParam(parameter_name + "/d", d) &&
 		nh_->getParam(parameter_name + "/t", t) &&
@@ -90,22 +91,24 @@ bool DHParameters::load( std::string parameter_name ) {
 			ROS_WARN("Unknown joint type (%s), setting static", type.c_str());
 		} //Else it's static, and that's already set
 
-		//Try to get joint variable, but no issue if we can't
+		//Try to get joint variable and accel filter, but no issue if we can't
 		nh_->getParam(parameter_name + "/q", q);
+		nh_->getParam(parameter_name + "/beta", beta);
 
-		success = set(d, t, r, a, jt, q);
+		success = set(d, t, r, a, jt, q, beta);
 	}
 
 	return success;
 }
 
-bool DHParameters::set( const double d, const double t, const double r, const double a, const JointType jt, const double q) {
+bool DHParameters::set( const double d, const double t, const double r, const double a, const JointType jt, const double q, const double beta) {
 	transform_valid_ = set_d(d) &&
 					   set_t(t) &&
 					   set_r(r) &&
 					   set_a(a) &&
 					   set_jt(jt) &&
-					   set_q(q);
+					   set_q(q) &&
+					   set_accel_filter(beta);
 
 	parameters_changed_ = true;
 
@@ -113,9 +116,14 @@ bool DHParameters::set( const double d, const double t, const double r, const do
 }
 
 bool DHParameters::set_accel_filter( const double b ) {
-	beta_ = b;
+	bool success = false;
 
-	return true;
+	if( (b >= 0.0) && (b <= 1.0) ) {
+		beta_ = b;
+		success = true;
+	}
+
+	return success;
 }
 
 bool DHParameters::is_valid( void ) {

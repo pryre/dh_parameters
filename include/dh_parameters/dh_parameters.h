@@ -40,7 +40,7 @@ class DHParameters {
 	public:
 		DHParameters( ros::NodeHandle *nh );
 		DHParameters( ros::NodeHandle *nh, std::string parameter_name );
-		DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0 );
+		DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0, const double beta = 0.0 );
 
 		~DHParameters( void );
 
@@ -48,7 +48,7 @@ class DHParameters {
 		bool load( std::string parameter_name );
 
 		//Set the joint parameters
-		bool set( const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0 );
+		bool set( const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0, const double beta = 0.0);
 		bool set_accel_filter( const double b );
 
 		bool is_valid( void );

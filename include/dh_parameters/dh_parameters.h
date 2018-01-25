@@ -21,6 +21,8 @@ class DHParameters {
 	private:
 		ros::NodeHandle *nh_;
 
+		std::string name_;
+
 		double d_;	//Z offset distance
 		double t_;	//Z rotation
 		double r_;	//X offset distance
@@ -40,7 +42,15 @@ class DHParameters {
 	public:
 		DHParameters( ros::NodeHandle *nh );
 		DHParameters( ros::NodeHandle *nh, std::string parameter_name );
-		DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0, const double beta = 0.0 );
+		DHParameters( ros::NodeHandle *nh,
+					  const double d,
+					  const double t,
+					  const double r,
+					  const double a,
+					  const std::string name = "",
+					  const JointType jt = JointType::Static,
+					  const double q = 0.0,
+					  const double beta = 0.0 );
 
 		~DHParameters( void );
 
@@ -48,12 +58,21 @@ class DHParameters {
 		bool load( std::string parameter_name );
 
 		//Set the joint parameters
-		bool set( const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0, const double beta = 0.0);
+		bool set( const double d,
+				  const double t,
+				  const double r,
+				  const double a,
+				  const std::string name = "",
+				  const JointType jt = JointType::Static,
+				  const double q = 0.0,
+				  const double beta = 0.0);
 		bool set_accel_filter( const double b );
 
 		bool is_valid( void );
 
 		//Get the joint parameters
+		std::string name( void );
+
 		double d( void );
 		double t( void );
 		double r( void );
@@ -75,6 +94,8 @@ class DHParameters {
 		bool set_t( const double t );
 		bool set_r( const double r );
 		bool set_a( const double a );
+
+		bool set_name( const std::string name );
 
 		bool set_jt( const JointType jt );
 		bool set_q( const double q );

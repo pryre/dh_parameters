@@ -12,6 +12,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh ) :
 							t_(0.0),
 							r_(0.0),
 							a_(0.0),
+							name_(""),
 							jt_(JointType::Static),
 							q_(0.0),
 							qd_(0.0),
@@ -28,6 +29,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 							t_(0.0),
 							r_(0.0),
 							a_(0.0),
+							name_(""),
 							jt_(JointType::Static),
 							q_(0.0),
 							qd_(0.0),
@@ -39,12 +41,13 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 	load(parameter_name);
 }
 
-DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const JointType jt, const double q, const double beta) :
+DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const std::string name, const JointType jt, const double q, const double beta) :
 							nh_(nh),
 							d_(0.0),
 							t_(0.0),
 							r_(0.0),
 							a_(0.0),
+							name_(""),
 							jt_(JointType::Static),
 							q_(0.0),
 							qd_(0.0),
@@ -53,7 +56,7 @@ DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t,
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
-	set(d,t,r,a,jt,q,beta);
+	set(d,t,r,a,name,jt,q,beta);
 }
 
 DHParameters::~DHParameters( void ) {
@@ -67,6 +70,7 @@ bool DHParameters::load( std::string parameter_name ) {
 	double t = 0.0;
 	double r = 0.0;
 	double a = 0.0;
+	std::string name;
 	JointType jt = JointType::Static;
 	double q = 0.0;
 	double beta = 0.0;
@@ -91,21 +95,23 @@ bool DHParameters::load( std::string parameter_name ) {
 			ROS_WARN("Unknown joint type (%s), setting static", type.c_str());
 		} //Else it's static, and that's already set
 
-		//Try to get joint variable and accel filter, but no issue if we can't
+		//Try to get additional info, but no issue if we can't
+		nh_->getParam(parameter_name + "/name", name);
 		nh_->getParam(parameter_name + "/q", q);
 		nh_->getParam(parameter_name + "/beta", beta);
 
-		success = set(d, t, r, a, jt, q, beta);
+		success = set(d, t, r, a, name, jt, q, beta);
 	}
 
 	return success;
 }
 
-bool DHParameters::set( const double d, const double t, const double r, const double a, const JointType jt, const double q, const double beta) {
+bool DHParameters::set( const double d, const double t, const double r, const double a, const std::string name, const JointType jt, const double q, const double beta) {
 	transform_valid_ = set_d(d) &&
 					   set_t(t) &&
 					   set_r(r) &&
 					   set_a(a) &&
+					   set_name(name) &&
 					   set_jt(jt) &&
 					   set_q(q) &&
 					   set_accel_filter(beta);
@@ -207,6 +213,12 @@ bool DHParameters::set_r( const double r ) {
 
 bool DHParameters::set_a( const double a ) {
 	a_ = a;
+
+	return true;
+}
+
+bool DHParameters::set_name( const std::string name ) {
+	name_ = name;
 
 	return true;
 }

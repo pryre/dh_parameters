@@ -14,6 +14,9 @@ DHParameters::DHParameters( ros::NodeHandle *nh ) :
 							a_(0.0),
 							jt_(JointType::Static),
 							q_(0.0),
+							qd_(0.0),
+							qdd_(0.0),
+							beta_(0.0),
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
@@ -27,6 +30,9 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 							a_(0.0),
 							jt_(JointType::Static),
 							q_(0.0),
+							qd_(0.0),
+							qdd_(0.0),
+							beta_(0.0),
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
@@ -41,6 +47,9 @@ DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t,
 							a_(0.0),
 							jt_(JointType::Static),
 							q_(0.0),
+							qd_(0.0),
+							qdd_(0.0),
+							beta_(0.0),
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
@@ -103,6 +112,12 @@ bool DHParameters::set( const double d, const double t, const double r, const do
 	return transform_valid_;
 }
 
+bool DHParameters::set_accel_filter( const double b ) {
+	beta_ = b;
+
+	return true;
+}
+
 bool DHParameters::is_valid( void ) {
 	return transform_valid_;
 }
@@ -131,8 +146,22 @@ double DHParameters::q( void ) {
 	return q_;
 }
 
-bool DHParameters::update(const double q) {
-	bool success = set_q(q);
+double DHParameters::qd( void ) {
+	return qd_;
+}
+
+double DHParameters::qdd( void ) {
+	return qdd_;
+}
+
+bool DHParameters::update(const double q, const double qd, const double dt) {
+	bool success = true;
+
+	double a = (dt > 0.0) ? (qd - qd_) / dt : 0.0;
+
+	success &= set_qdd(lpf(a, qdd_));
+	success &= set_qd(qd);
+	success &= set_q(q);
 
 	parameters_changed_ = success;
 
@@ -189,6 +218,22 @@ bool DHParameters::set_q( const double q ) {
 	q_ = q;
 
 	return true;
+}
+
+bool DHParameters::set_qd( const double qd ) {
+	qd_ = qd;
+
+	return true;
+}
+
+bool DHParameters::set_qdd( const double qdd ) {
+	qdd_ = qdd;
+
+	return true;
+}
+
+double DHParameters::lpf(const double v, const double vp) {
+	return ((1.0 - beta_) * vp) + (beta_ * v);
 }
 
 void DHParameters::generate_transform( void ) {

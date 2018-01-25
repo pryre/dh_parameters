@@ -27,7 +27,11 @@ class DHParameters {
 		double a_;	//X rotation
 
 		JointType jt_;	//Joint type
-		double q_;	//Joint parameter
+		double q_;	//Joint parameter position
+		double qd_;	//Joint parameter velocity
+		double qdd_;//Joint parameter acceleration estimate
+
+		double beta_;
 
 		bool parameters_changed_;
 		bool transform_valid_;
@@ -45,6 +49,7 @@ class DHParameters {
 
 		//Set the joint parameters
 		bool set( const double d, const double t, const double r, const double a, const JointType jt = JointType::Static, const double q = 0.0 );
+		bool set_accel_filter( const double b );
 
 		bool is_valid( void );
 
@@ -56,9 +61,11 @@ class DHParameters {
 
 		JointType jt( void );
 		double q( void );
+		double qd( void );
+		double qdd( void );
 
 		//Update the joint variable
-		bool update(const double q);
+		bool update(const double q, const double qd = 0.0, const double dt = 0.0);
 
 		//Get the joint transformation
 		Eigen::Affine3d transform( void );
@@ -71,6 +78,10 @@ class DHParameters {
 
 		bool set_jt( const JointType jt );
 		bool set_q( const double q );
+		bool set_qd( const double qd );
+		bool set_qdd( const double qdd );
+
+		double lpf( const double v, const double vp );
 
 		void generate_transform( void );
 };

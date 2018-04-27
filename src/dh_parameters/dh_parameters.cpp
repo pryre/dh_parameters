@@ -176,9 +176,13 @@ double DHParameters::qdd( void ) {
 bool DHParameters::update(const double q, const double qd, const double dt) {
 	bool success = true;
 
+	//Only estimate accel if dt is valid
 	double a = (dt > 0.0) ? (qd - qd_) / dt : 0.0;
 
-	success &= set_qdd(lpf(a, qdd_));
+	//If the same velocity value comes in, as last time, bypass the filter
+	a = (qd == qd_) ? 0.0 : lpf(a, qdd_);
+
+	success &= set_qdd(a);
 	success &= set_qd(qd);
 	success &= set_q(q);
 

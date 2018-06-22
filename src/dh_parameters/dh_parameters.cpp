@@ -6,8 +6,7 @@
 #include <string>
 
 
-DHParameters::DHParameters( ros::NodeHandle *nh ) :
-							nh_(nh),
+DHParameters::DHParameters( void ) :
 							d_(0.0),
 							t_(0.0),
 							r_(0.0),
@@ -24,7 +23,6 @@ DHParameters::DHParameters( ros::NodeHandle *nh ) :
 }
 
 DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
-							nh_(nh),
 							d_(0.0),
 							t_(0.0),
 							r_(0.0),
@@ -38,11 +36,27 @@ DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
 							parameters_changed_(true),
 							transform_valid_(false),
 							transform_(Eigen::Affine3d::Identity()) {
-	load(parameter_name);
+	load( nh, parameter_name);
 }
 
-DHParameters::DHParameters( ros::NodeHandle *nh, const double d, const double t, const double r, const double a, const std::string name, const JointType jt, const double q, const double beta) :
-							nh_(nh),
+DHParameters::DHParameters( const dh_parameters::JointDescription &description ) :
+							d_(0.0),
+							t_(0.0),
+							r_(0.0),
+							a_(0.0),
+							name_(""),
+							jt_(JointType::Static),
+							q_(0.0),
+							qd_(0.0),
+							qdd_(0.0),
+							beta_(0.0),
+							parameters_changed_(true),
+							transform_valid_(false),
+							transform_(Eigen::Affine3d::Identity()) {
+	load(description);
+}
+
+DHParameters::DHParameters( const double d, const double t, const double r, const double a, const std::string name, const JointType jt, const double q, const double beta) :
 							d_(0.0),
 							t_(0.0),
 							r_(0.0),
@@ -63,7 +77,7 @@ DHParameters::~DHParameters( void ) {
 
 }
 
-bool DHParameters::load( std::string parameter_name ) {
+bool DHParameters::load( ros::NodeHandle *nh, std::string parameter_name ) {
 	double success = false;
 
 	double d = 0.0;
@@ -75,13 +89,13 @@ bool DHParameters::load( std::string parameter_name ) {
 	double q = 0.0;
 	double beta = 0.0;
 
-	if( nh_->getParam(parameter_name + "/d", d) &&
-		nh_->getParam(parameter_name + "/t", t) &&
-		nh_->getParam(parameter_name + "/r", r) &&
-		nh_->getParam(parameter_name + "/a", a) ) {
+	if( nh->getParam(parameter_name + "/d", d) &&
+		nh->getParam(parameter_name + "/t", t) &&
+		nh->getParam(parameter_name + "/r", r) &&
+		nh->getParam(parameter_name + "/a", a) ) {
 
 		std::string type;
-		nh_->getParam(parameter_name + "/type", type);
+		nh->getParam(parameter_name + "/type", type);
 
 		if(type == "twist_x") {
 			jt = JointType::TwistX;
@@ -96,12 +110,39 @@ bool DHParameters::load( std::string parameter_name ) {
 		} //Else it's static, and that's already set
 
 		//Try to get additional info, but no issue if we can't
-		nh_->getParam(parameter_name + "/name", name);
-		nh_->getParam(parameter_name + "/q", q);
-		nh_->getParam(parameter_name + "/beta", beta);
+		nh->getParam(parameter_name + "/name", name);
+		nh->getParam(parameter_name + "/q", q);
+		nh->getParam(parameter_name + "/beta", beta);
 
 		success = set(d, t, r, a, name, jt, q, beta);
 	}
+
+	return success;
+}
+
+bool DHParameters::load( const dh_parameters::JointDescription &description ) {
+	JointType jt = JointType::Static;
+
+	if(description.type == "twist_x") {
+		jt = JointType::TwistX;
+	} else if(description.type == "twist_z") {
+		jt = JointType::TwistZ;
+	} else if(description.type == "translate_x") {
+		jt = JointType::TranslateX;
+	} else if(description.type == "translate_z") {
+		jt = JointType::TranslateZ;
+	} else if(description.type != "static") {
+		ROS_WARN("Unknown joint type (%s), setting static", description.type.c_str());
+	} //Else it's static, and that's already set
+
+	bool success = set(description.d,
+					   description.t,
+					   description.r,
+					   description.a,
+					   description.name,
+					   jt,
+					   description.q,
+					   description.beta);
 
 	return success;
 }

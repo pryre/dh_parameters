@@ -2,6 +2,7 @@
 
 #include <ros/ros.h>
 
+#include <dh_parameters/JointDescription.h>
 #include <eigen3/Eigen/Dense>
 
 #include <string>
@@ -19,8 +20,6 @@ class DHParameters {
 		};
 
 	private:
-		ros::NodeHandle *nh_;
-
 		std::string name_;
 
 		double d_;	//Z offset distance
@@ -40,10 +39,10 @@ class DHParameters {
 		Eigen::Affine3d transform_;
 
 	public:
-		DHParameters( ros::NodeHandle *nh );
+		DHParameters( void );
 		DHParameters( ros::NodeHandle *nh, std::string parameter_name );
-		DHParameters( ros::NodeHandle *nh,
-					  const double d,
+		DHParameters( const dh_parameters::JointDescription &description );
+		DHParameters( const double d,
 					  const double t,
 					  const double r,
 					  const double a,
@@ -55,7 +54,8 @@ class DHParameters {
 		~DHParameters( void );
 
 		//Load in a configuration
-		bool load( std::string parameter_name );
+		bool load( ros::NodeHandle *nh, std::string parameter_name );
+		bool load( const dh_parameters::JointDescription &description );
 
 		//Set the joint parameters
 		bool set( const double d,

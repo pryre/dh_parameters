@@ -173,44 +173,44 @@ bool DHParameters::set_accel_filter( const double b ) {
 	return success;
 }
 
-bool DHParameters::is_valid( void ) {
+bool DHParameters::is_valid( void ) const {
 	return transform_valid_;
 }
 
-double DHParameters::d( void ) {
+double DHParameters::d( void ) const {
 	return d_;
 }
 
-double DHParameters::t( void ) {
+double DHParameters::t( void ) const {
 	return t_;
 }
 
-double DHParameters::r( void ) {
+double DHParameters::r( void ) const {
 	return r_;
 }
 
-double DHParameters::a( void ) {
+double DHParameters::a( void ) const {
 	return a_;
 }
 
 
-std::string DHParameters::name( void ) {
+std::string DHParameters::name( void ) const {
 	return name_;
 }
 
-DHParameters::JointType DHParameters::jt( void ) {
+DHParameters::JointType DHParameters::jt( void ) const {
 	return jt_;
 }
 
-double DHParameters::q( void ) {
+double DHParameters::q( void ) const {
 	return q_;
 }
 
-double DHParameters::qd( void ) {
+double DHParameters::qd( void ) const {
 	return qd_;
 }
 
-double DHParameters::qdd( void ) {
+double DHParameters::qdd( void ) const {
 	return qdd_;
 }
 
@@ -232,15 +232,16 @@ bool DHParameters::update(const double q, const double qd, const double dt) {
 	return success;
 }
 
-Eigen::Affine3d DHParameters::transform( void ) {
+const Eigen::Affine3d& DHParameters::transform( void ) {
 	if(is_valid()) {
 		if(parameters_changed_)
 			generate_transform();
 
-		return transform_;
+	} else {
+		transform_ = Eigen::Affine3d::Identity();
 	}
 
-	return Eigen::Affine3d::Identity();
+	return transform_;
 }
 
 bool DHParameters::set_d( const double d ) {

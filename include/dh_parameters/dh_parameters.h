@@ -68,26 +68,26 @@ class DHParameters {
 				  const double beta = 0.0);
 		bool set_accel_filter( const double b );
 
-		bool is_valid( void );
+		bool is_valid( void ) const;
 
 		//Get the joint parameters
-		std::string name( void );
+		std::string name( void ) const;
 
-		double d( void );
-		double t( void );
-		double r( void );
-		double a( void );
+		double d( void ) const;
+		double t( void ) const;
+		double r( void ) const;
+		double a( void ) const;
 
-		JointType jt( void );
-		double q( void );
-		double qd( void );
-		double qdd( void );
+		JointType jt( void ) const;
+		double q( void ) const;
+		double qd( void ) const;
+		double qdd( void ) const;
 
 		//Update the joint variable
 		bool update(const double q, const double qd = 0.0, const double dt = 0.0);
 
 		//Get the joint transformation
-		Eigen::Affine3d transform( void );
+		const Eigen::Affine3d& transform( void );
 
 	private:
 		bool set_d( const double d );

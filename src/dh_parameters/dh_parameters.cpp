@@ -246,30 +246,35 @@ const Eigen::Affine3d& DHParameters::transform( void ) {
 
 bool DHParameters::set_d( const double d ) {
 	d_ = d;
+	parameters_changed_ = true;
 
 	return true;
 }
 
 bool DHParameters::set_t( const double t ) {
 	t_ = t;
+	parameters_changed_ = true;
 
 	return true;
 }
 
 bool DHParameters::set_r( const double r ) {
 	r_ = r;
+	parameters_changed_ = true;
 
 	return true;
 }
 
 bool DHParameters::set_a( const double a ) {
 	a_ = a;
+	parameters_changed_ = true;
 
 	return true;
 }
 
 bool DHParameters::set_name( const std::string name ) {
 	name_ = name;
+	parameters_changed_ = true;
 
 	return true;
 }
@@ -279,6 +284,7 @@ bool DHParameters::set_jt( DHParameters::JointType jt ) {
 
 	if( (jt >= 0) && (jt < JointType::NUM_TYPES) ) {
 		jt_ = jt;
+		parameters_changed_ = true;
 		success = true;
 	}
 

@@ -78,6 +78,12 @@ class DHParameters {
 		double r( void ) const;
 		double a( void ) const;
 
+		bool set_d( const double d );
+		bool set_t( const double t );
+		bool set_r( const double r );
+		bool set_a( const double a );
+		bool set_jt( const JointType jt );
+
 		JointType jt( void ) const;
 		double q( void ) const;
 		double qd( void ) const;
@@ -90,14 +96,9 @@ class DHParameters {
 		const Eigen::Affine3d& transform( void );
 
 	private:
-		bool set_d( const double d );
-		bool set_t( const double t );
-		bool set_r( const double r );
-		bool set_a( const double a );
 
 		bool set_name( const std::string name );
 
-		bool set_jt( const JointType jt );
 		bool set_q( const double q );
 		bool set_qd( const double qd );
 		bool set_qdd( const double qdd );

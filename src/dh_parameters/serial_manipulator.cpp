@@ -30,6 +30,40 @@ bool SerialManipulator::add_joint( const DHParameters& joint ) {
 	return success;
 }
 
+bool SerialManipulator::add_body( const double center_of_mass, const int parent_joint ) {
+	bool success = false;
+	bool used_joint = false;
+
+	for(int i=0; i<body_map_.size(); i++) {
+		if(body_map_[i].parent_joint == parent_joint) {
+			used_joint = true;
+			ROS_ERROR("Body already defined for parent joint %i", parent_joint);
+			break;
+		}
+	}
+
+	//XXX: The parent joint represents the last joint before the body,
+	//such that the body is aligned on the axis of joint: parent_joint + 1
+	if( (parent_joint < int(joints_.size()-1)) && (parent_joint >= -1) && !used_joint) {
+		if( (joints_[parent_joint + 1].jt() == DHParameters::JointType::TranslateX) ||
+			(joints_[parent_joint + 1].jt() == DHParameters::JointType::TranslateZ) ) {
+
+			ROS_WARN("Body added to linear joint, this may produce undesired results");
+		}
+
+		body_map_t body;
+		body.center_of_mass = center_of_mass;
+		body.parent_joint = parent_joint;
+		body_map_.push_back(body);
+
+		success = true;
+	} else {
+		ROS_ERROR("Invalid parent joint %i", parent_joint);
+	}
+
+	return success;
+}
+
 bool SerialManipulator::is_valid( void ) {
 	bool valid = true;
 
@@ -42,13 +76,14 @@ bool SerialManipulator::is_valid( void ) {
 
 void SerialManipulator::reset( void ) {
 	joints_.clear();
+	body_map_.clear();
 }
 
 int SerialManipulator::num_joints( void ) {
 	joints_.size();
 }
 
-void SerialManipulator::get_dynamic_map( std::vector<bool>& map ) {
+void SerialManipulator::get_dynamic_joint_map( std::vector<bool>& map ) {
 	map.resize( num_joints() );
 
 	for(int i=0; i<num_joints(); i++) {
@@ -98,7 +133,6 @@ void SerialManipulator::calculate_Jxy( Eigen::MatrixXd &J, const unsigned int x,
 	unsigned int jc = 0;
 	J = Eigen::MatrixXd(6,nj);
 
-
 	Eigen::Affine3d gn;
 	calculate_gxy(gn, x, y);
 
@@ -146,6 +180,58 @@ void SerialManipulator::calculate_Je( Eigen::MatrixXd &Je ) {
 	calculate_Jxy( Je, 0, num_joints() );
 }
 
+void SerialManipulator::calculate_J_body( Eigen::MatrixXd &Jbi, const unsigned int bi ) {
+	unsigned int x = body_map_[bi].parent_joint + 2; //+1 for parent joint, and +1 for body joint
+	assert( x <= joints_.size() );
+
+	//Check to see if the base link has not been requested
+	if(body_map_[x].parent_joint >=0) {
+		unsigned int nj = x;
+		unsigned int jc = 0;
+		Jbi = Eigen::MatrixXd(6,nj);
+
+		Eigen::Affine3d gn;
+		calculate_g_body(gn, bi);
+
+		for(int i=0; i<x; i++) {
+			bool is_rot = false;
+			Eigen::Vector3d axis;
+			Eigen::VectorXd Ji = Eigen::VectorXd::Zero(6);
+			Eigen::Affine3d gi;
+			calculate_gxy(gi, 0, i);
+
+			if(joints_[i].jt() == DHParameters::JointType::TwistX) {
+				is_rot = true;
+				axis = gi.linear()*Eigen::Vector3d(1.0,0.0,0.0);
+			} else if(joints_[i].jt() == DHParameters::JointType::TwistZ) {
+				is_rot = true;
+				axis = gi.linear()*Eigen::Vector3d(0.0,0.0,1.0);
+			} else if(joints_[i].jt() == DHParameters::JointType::TranslateX) {
+				axis = gi.linear()*Eigen::Vector3d(1.0,0.0,0.0);
+			} else if(joints_[i].jt() == DHParameters::JointType::TranslateZ) {
+				axis = gi.linear()*Eigen::Vector3d(0.0,0.0,1.0);
+			} else {
+				axis = Eigen::Vector3d::Zero();
+			}
+
+			if(is_rot) {
+				//Ji = [ zi X (pn - pi); zi]
+				//ROS_INFO_STREAM("dg:\n" << (gn.translation() - gi.translation()));
+				Ji.segment<3>(0) = axis.cross(gn.translation() - gi.translation());
+
+				Ji.segment<3>(3) = axis;
+			} else {
+				//Ji = [ zi; 0]
+				Ji.segment<3>(0) = axis;
+			}
+
+			Jbi.block<6,1>(0,jc) = Ji;
+
+			jc++;
+		}
+	}
+}
+
 void SerialManipulator::calculate_gxy( Eigen::Affine3d &g, const unsigned int x, const unsigned int y ) {
 	assert( ( x <= joints_.size() ) && ( y <= joints_.size() ) );
 
@@ -178,4 +264,23 @@ void SerialManipulator::calculate_gbe( Eigen::Affine3d &gbe ) {
 	assert(num_joints() > 0);
 
 	calculate_gxy( gbe, 0, joints_.size() );
+}
+
+void SerialManipulator::calculate_g_body( Eigen::Affine3d &gbi, const unsigned int i ) {
+	assert(i < body_map_.size());
+
+	//Check to see if the base link has not been requested
+	if(body_map_[i].parent_joint >=0) {
+		DHParameters bdh = joints_[body_map_[i].parent_joint + 1];	//+1-1
+		bdh.set_r(body_map_[i].center_of_mass);
+
+		//Calculate the parent transform
+		Eigen::Affine3d gp;
+		calculate_gxy( gp, 0, body_map_[i].parent_joint + 1);
+
+		//Calculate the body transform
+		gbi = gp * bdh.transform();
+	} else {
+		gbi = Eigen::Affine3d::Identity();
+	}
 }

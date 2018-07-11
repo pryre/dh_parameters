@@ -181,7 +181,10 @@ void SerialManipulator::calculate_Je( Eigen::MatrixXd &Je ) {
 }
 
 void SerialManipulator::calculate_J_body( Eigen::MatrixXd &Jbi, const unsigned int bi ) {
-	unsigned int x = body_map_[bi].parent_joint + 2; //+1 for parent joint, and +1 for body joint
+	//XXX: This Jacobian returns the joint jacobian of a body in the body frame,
+	//	as apposed to the base frame!
+
+	unsigned int x = body_map_[bi].parent_joint + 2; //XXX: +1 for parent joint, and +1 for body joint
 	assert( x <= joints_.size() );
 
 	//Check to see if the base link has not been requested
@@ -202,27 +205,27 @@ void SerialManipulator::calculate_J_body( Eigen::MatrixXd &Jbi, const unsigned i
 
 			if(joints_[i].jt() == DHParameters::JointType::TwistX) {
 				is_rot = true;
-				axis = gi.linear()*Eigen::Vector3d(1.0,0.0,0.0);
+				axis = gi.linear()*Eigen::Vector3d::UnitX();
 			} else if(joints_[i].jt() == DHParameters::JointType::TwistZ) {
 				is_rot = true;
-				axis = gi.linear()*Eigen::Vector3d(0.0,0.0,1.0);
+				axis = gi.linear()*Eigen::Vector3d::UnitZ();
 			} else if(joints_[i].jt() == DHParameters::JointType::TranslateX) {
-				axis = gi.linear()*Eigen::Vector3d(1.0,0.0,0.0);
+				axis = gi.linear()*Eigen::Vector3d::UnitX();
 			} else if(joints_[i].jt() == DHParameters::JointType::TranslateZ) {
-				axis = gi.linear()*Eigen::Vector3d(0.0,0.0,1.0);
+				axis = gi.linear()*Eigen::Vector3d::UnitZ();
 			} else {
 				axis = Eigen::Vector3d::Zero();
 			}
 
 			if(is_rot) {
 				//Ji = [ zi X (pn - pi); zi]
-				//ROS_INFO_STREAM("dg:\n" << (gn.translation() - gi.translation()));
-				Ji.segment<3>(0) = axis.cross(gn.translation() - gi.translation());
+				//XXX: The gn.linear().inverse() is the difference from the usual calculation
+				Ji.segment<3>(0) = gn.linear().inverse()*axis.cross(gn.translation() - gi.translation());
 
-				Ji.segment<3>(3) = axis;
+				Ji.segment<3>(3) = gn.linear().inverse()*axis;
 			} else {
 				//Ji = [ zi; 0]
-				Ji.segment<3>(0) = axis;
+				Ji.segment<3>(0) = gn.linear().inverse()*axis;
 			}
 
 			Jbi.block<6,1>(0,jc) = Ji;
@@ -271,7 +274,7 @@ void SerialManipulator::calculate_g_body( Eigen::Affine3d &gbi, const unsigned i
 
 	//Check to see if the base link has not been requested
 	if(body_map_[i].parent_joint >=0) {
-		DHParameters bdh = joints_[body_map_[i].parent_joint + 1];	//+1-1
+		DHParameters bdh = joints_[body_map_[i].parent_joint + 1];
 		bdh.set_r(body_map_[i].center_of_mass);
 
 		//Calculate the parent transform

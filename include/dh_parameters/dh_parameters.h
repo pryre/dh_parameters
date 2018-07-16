@@ -40,7 +40,7 @@ class DHParameters {
 
 	public:
 		DHParameters( void );
-		DHParameters( ros::NodeHandle *nh, std::string parameter_name );
+		DHParameters( ros::NodeHandle& nh, std::string parameter_name );
 		DHParameters( const dh_parameters::JointDescription &description );
 		DHParameters( const double d,
 					  const double t,
@@ -54,7 +54,7 @@ class DHParameters {
 		~DHParameters( void );
 
 		//Load in a configuration
-		bool load( ros::NodeHandle *nh, std::string parameter_name );
+		bool load( ros::NodeHandle &nh, std::string parameter_name );
 		bool load( const dh_parameters::JointDescription &description );
 
 		//Set the joint parameters

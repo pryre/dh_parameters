@@ -22,7 +22,7 @@ DHParameters::DHParameters( void ) :
 							transform_(Eigen::Affine3d::Identity()) {
 }
 
-DHParameters::DHParameters( ros::NodeHandle *nh, std::string parameter_name ) :
+DHParameters::DHParameters( ros::NodeHandle &nh, std::string parameter_name ) :
 							d_(0.0),
 							t_(0.0),
 							r_(0.0),
@@ -77,7 +77,7 @@ DHParameters::~DHParameters( void ) {
 
 }
 
-bool DHParameters::load( ros::NodeHandle *nh, std::string parameter_name ) {
+bool DHParameters::load( ros::NodeHandle& nh, std::string parameter_name ) {
 	double success = false;
 
 	double d = 0.0;
@@ -89,13 +89,13 @@ bool DHParameters::load( ros::NodeHandle *nh, std::string parameter_name ) {
 	double q = 0.0;
 	double beta = 0.0;
 
-	if( nh->getParam(parameter_name + "/d", d) &&
-		nh->getParam(parameter_name + "/t", t) &&
-		nh->getParam(parameter_name + "/r", r) &&
-		nh->getParam(parameter_name + "/a", a) ) {
+	if( nh.getParam(parameter_name + "/d", d) &&
+		nh.getParam(parameter_name + "/t", t) &&
+		nh.getParam(parameter_name + "/r", r) &&
+		nh.getParam(parameter_name + "/a", a) ) {
 
 		std::string type;
-		nh->getParam(parameter_name + "/type", type);
+		nh.getParam(parameter_name + "/type", type);
 
 		if(type == "twist_x") {
 			jt = JointType::TwistX;
@@ -110,9 +110,9 @@ bool DHParameters::load( ros::NodeHandle *nh, std::string parameter_name ) {
 		} //Else it's static, and that's already set
 
 		//Try to get additional info, but no issue if we can't
-		nh->getParam(parameter_name + "/name", name);
-		nh->getParam(parameter_name + "/q", q);
-		nh->getParam(parameter_name + "/beta", beta);
+		nh.getParam(parameter_name + "/name", name);
+		nh.getParam(parameter_name + "/q", q);
+		nh.getParam(parameter_name + "/beta", beta);
 
 		success = set(d, t, r, a, name, jt, q, beta);
 	}
